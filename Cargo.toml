@@ -1,0 +1,40 @@
+[package]
+name = "quantum-rcs-benchmark"
+version = "0.1.0"
+edition = "2021"
+authors = ["Henry <henry@quantum-rcs.dev>"]
+description = "Daily Quantum Random Circuit Sampling Benchmark with XEB scoring"
+repository = "https://github.com/yourusername/quantum-rcs-benchmark"
+license = "MIT"
+keywords = ["quantum", "benchmark", "rcs", "xeb", "simulation"]
+categories = ["science", "simulation"]
+
+[lib]
+name = "quantum_rcs"
+path = "src/lib.rs"
+
+[[bin]]
+name = "rcs_sim"
+path = "src/bin/rcs_sim.rs"
+
+[[bin]]
+name = "readme_gen"
+path = "src/bin/readme_gen.rs"
+
+[dependencies]
+nalgebra = "0.32"
+num-complex = "0.4"
+rand = "0.8"
+rand_chacha = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
+
+# Note: criterion benchmarks require rustc 1.80+
+# [dev-dependencies]
+# criterion = "0.5"
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = 3

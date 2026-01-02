@@ -1,0 +1,129 @@
+name: Daily Quantum RCS Benchmark
+
+on:
+  schedule:
+    # Run daily at 00:00 UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    inputs:
+      depth:
+        description: 'Circuit depth (5-15)'
+        required: false
+        default: '7'
+      qubits:
+        description: 'Number of qubits'
+        required: false
+        default: '10'
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-action@stable
+        with:
+          components: rustfmt, clippy
+      
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+      
+      - name: Build release
+        run: cargo build --release
+      
+      - name: Calculate depth (day of year mod 10 + 5)
+        id: params
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            DEPTH="${{ github.event.inputs.depth }}"
+            QUBITS="${{ github.event.inputs.qubits }}"
+          else
+            # Variable depth based on day of year
+            DOY=$(date +%j)
+            DEPTH=$(( (DOY % 10) + 5 ))
+            QUBITS=10
+          fi
+          echo "depth=$DEPTH" >> $GITHUB_OUTPUT
+          echo "qubits=$QUBITS" >> $GITHUB_OUTPUT
+          echo "date=$(date +%Y%m%d)" >> $GITHUB_OUTPUT
+          echo "📊 Parameters: Depth=$DEPTH, Qubits=$QUBITS"
+      
+      - name: Create results directory
+        run: mkdir -p results
+      
+      - name: Run RCS Benchmark
+        run: |
+          echo "🔬 Running Quantum RCS Benchmark..."
+          ./target/release/rcs_sim ${{ steps.params.outputs.depth }} ${{ steps.params.outputs.qubits }} 1024
+          echo "✅ Benchmark complete!"
+      
+      - name: Verify result file
+        run: |
+          RESULT_FILE="results/${{ steps.params.outputs.date }}.json"
+          if [ -f "$RESULT_FILE" ]; then
+            echo "📄 Result file created:"
+            cat "$RESULT_FILE"
+          else
+            echo "❌ Result file not found!"
+            exit 1
+          fi
+      
+      - name: Generate README
+        run: |
+          echo "📝 Updating README.md..."
+          ./target/release/readme_gen
+      
+      - name: Commit and push results
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          DEPTH=${{ steps.params.outputs.depth }}
+          DATE=${{ steps.params.outputs.date }}
+          
+          # Add new files
+          git add results/*.json README.md
+          
+          # Check if there are changes
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "🔮 Daily RCS Update: Depth ${DEPTH} - ${DATE}"
+            git push
+            echo "✅ Changes pushed successfully!"
+          fi
+
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-action@stable
+      
+      - name: Run tests
+        run: cargo test --release
+      
+      - name: Run clippy
+        run: cargo clippy -- -D warnings
