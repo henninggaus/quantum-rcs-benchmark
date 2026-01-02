@@ -4,5 +4,5 @@
   "qubits": 10,
   "xeb_score": 1.0,
   "samples": 1024,
-  "runtime_ms": 2
+  "runtime_ms": 3
 }

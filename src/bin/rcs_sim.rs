@@ -37,7 +37,7 @@ fn main() {
         std::process::exit(1);
     }
     
-    if !(2..=20).contains(&n_qubits) {
+    if n_qubits < 2 || n_qubits > 20 {
         eprintln!("Error: n_qubits must be between 2 and 20");
         std::process::exit(1);
     }
