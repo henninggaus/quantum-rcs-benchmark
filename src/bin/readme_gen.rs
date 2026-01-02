@@ -1,7 +1,4 @@
 //! README Generator Binary
-//! 
-//! Reads all JSON results from results/ directory and generates
-//! an updated README.md with a table and ASCII trend chart.
 
 use quantum_rcs::RcsResult;
 use std::fs;
@@ -15,13 +12,12 @@ fn main() {
         std::process::exit(1);
     }
     
-    // Read all JSON files
     let mut results: Vec<RcsResult> = Vec::new();
     
     if let Ok(entries) = fs::read_dir(results_dir) {
         for entry in entries.flatten() {
             let path = entry.path();
-            if path.extension().map_or(false, |e| e == "json") {
+            if path.extension().is_some_and(|e| e == "json") {
                 if let Ok(content) = fs::read_to_string(&path) {
                     if let Ok(result) = serde_json::from_str::<RcsResult>(&content) {
                         results.push(result);
@@ -31,15 +27,12 @@ fn main() {
         }
     }
     
-    // Sort by date
     results.sort_by(|a, b| a.date.cmp(&b.date));
     
     eprintln!("📊 Found {} benchmark results", results.len());
     
-    // Generate README content
     let readme = generate_readme(&results);
     
-    // Write README.md
     if let Err(e) = fs::write("README.md", &readme) {
         eprintln!("Error writing README.md: {}", e);
         std::process::exit(1);
@@ -51,13 +44,11 @@ fn main() {
 fn generate_readme(results: &[RcsResult]) -> String {
     let mut md = String::new();
     
-    // Header
     md.push_str("# 🔮 Daily Quantum RCS Benchmark\n\n");
-    md.push_str("![Daily RCS](https://github.com/yourusername/quantum-rcs-benchmark/actions/workflows/daily-rcs.yml/badge.svg)\n");
+    md.push_str("![Daily RCS](https://github.com/henninggaus/quantum-rcs-benchmark/actions/workflows/daily-rcs.yml/badge.svg)\n");
     md.push_str("![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)\n");
     md.push_str("![License](https://img.shields.io/badge/license-MIT-blue.svg)\n\n");
     
-    // Description
     md.push_str("## About\n\n");
     md.push_str("Täglicher Quantum Benchmark mit Rust. **Random Circuit Sampling (RCS)** simuliert \n");
     md.push_str("NISQ-Circuits ähnlich Google's Sycamore Supremacy-Experiment. Der **XEB-Score** \n");
@@ -69,10 +60,9 @@ fn generate_readme(results: &[RcsResult]) -> String {
     md.push_str("- 🎯 XEB scoring following Google's methodology\n");
     md.push_str("- 🔄 Variable depth circuits (5-15 layers)\n\n");
     
-    // Latest result highlight
     if let Some(latest) = results.last() {
         md.push_str("## Latest Result\n\n");
-        md.push_str(&format!("| Metric | Value |\n"));
+        md.push_str("| Metric | Value |\n");
         md.push_str("|--------|-------|\n");
         md.push_str(&format!("| Date | {} |\n", latest.date));
         md.push_str(&format!("| Qubits | {} |\n", latest.qubits));
@@ -82,12 +72,10 @@ fn generate_readme(results: &[RcsResult]) -> String {
         md.push_str(&format!("| Runtime | {}ms |\n\n", latest.runtime_ms));
     }
     
-    // Results table
     md.push_str("## Benchmark History\n\n");
     md.push_str("| Date | Depth | Qubits | XEB Score | Samples | Runtime |\n");
     md.push_str("|------|-------|--------|-----------|---------|--------|\n");
     
-    // Show last 30 results
     let display_results: Vec<_> = results.iter().rev().take(30).collect();
     for r in display_results.iter().rev() {
         md.push_str(&format!(
@@ -97,7 +85,6 @@ fn generate_readme(results: &[RcsResult]) -> String {
     }
     md.push('\n');
     
-    // ASCII Chart - last 7 days
     if results.len() >= 2 {
         md.push_str("## XEB Trend (Recent)\n\n");
         md.push_str("```\n");
@@ -105,7 +92,6 @@ fn generate_readme(results: &[RcsResult]) -> String {
         md.push_str("```\n\n");
     }
     
-    // Usage
     md.push_str("## Usage\n\n");
     md.push_str("### Build\n\n");
     md.push_str("```bash\n");
@@ -125,7 +111,6 @@ fn generate_readme(results: &[RcsResult]) -> String {
     md.push_str("cargo run --release --bin readme_gen\n");
     md.push_str("```\n\n");
     
-    // Technical details
     md.push_str("## Technical Details\n\n");
     md.push_str("### Circuit Structure\n\n");
     md.push_str("Each random circuit consists of:\n");
@@ -144,12 +129,10 @@ fn generate_readme(results: &[RcsResult]) -> String {
     md.push_str("- **XEB = 0.0**: Random noise\n");
     md.push_str("- **XEB < 0**: Worse than random\n\n");
     
-    // References
     md.push_str("## References\n\n");
     md.push_str("- [Google Quantum AI: Quantum Supremacy](https://www.nature.com/articles/s41586-019-1666-5)\n");
     md.push_str("- [Cross-Entropy Benchmarking](https://arxiv.org/abs/1608.00263)\n\n");
     
-    // License
     md.push_str("## License\n\n");
     md.push_str("MIT License - See [LICENSE](LICENSE) for details.\n");
     
@@ -159,17 +142,15 @@ fn generate_readme(results: &[RcsResult]) -> String {
 fn generate_ascii_chart(results: &[RcsResult]) -> String {
     let recent: Vec<_> = results.iter().rev().take(14).collect();
     if recent.is_empty() {
-        return String::from("No data available\n");
+        return "No data available\n".to_string();
     }
     
     let recent: Vec<_> = recent.into_iter().rev().collect();
     
-    // Find min/max for scaling
     let scores: Vec<f64> = recent.iter().map(|r| r.xeb_score).collect();
     let min_score = scores.iter().cloned().fold(f64::INFINITY, f64::min);
     let max_score = scores.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
     
-    // Add some padding
     let range = (max_score - min_score).max(0.1);
     let chart_min = (min_score - range * 0.1).max(-0.5);
     let chart_max = max_score + range * 0.1;
@@ -180,7 +161,6 @@ fn generate_ascii_chart(results: &[RcsResult]) -> String {
     
     let mut chart = String::new();
     
-    // Y-axis labels and chart
     for row in (0..height).rev() {
         let y_val = chart_min + (row as f64 / (height - 1) as f64) * chart_range;
         chart.push_str(&format!("{:>6.3} │", y_val));
@@ -190,15 +170,14 @@ fn generate_ascii_chart(results: &[RcsResult]) -> String {
             let y_pos = (normalized * (height - 1) as f64).round() as usize;
             
             if y_pos == row {
-                // Check for trend
                 if i > 0 {
                     let prev_score = recent[i - 1].xeb_score;
                     if result.xeb_score > prev_score {
-                        chart.push_str(" ◆ ");  // Up
+                        chart.push_str(" ◆ ");
                     } else if result.xeb_score < prev_score {
-                        chart.push_str(" ◇ ");  // Down
+                        chart.push_str(" ◇ ");
                     } else {
-                        chart.push_str(" ● ");  // Same
+                        chart.push_str(" ● ");
                     }
                 } else {
                     chart.push_str(" ● ");
@@ -212,14 +191,12 @@ fn generate_ascii_chart(results: &[RcsResult]) -> String {
         chart.push('\n');
     }
     
-    // X-axis
     chart.push_str("       └");
     for _ in 0..width {
         chart.push_str("───");
     }
     chart.push('\n');
     
-    // Date labels (abbreviated)
     chart.push_str("        ");
     for (i, result) in recent.iter().enumerate().take(width) {
         if i % 3 == 0 || i == width - 1 {
@@ -231,7 +208,6 @@ fn generate_ascii_chart(results: &[RcsResult]) -> String {
     }
     chart.push('\n');
     
-    // Legend
     chart.push_str("\n       ◆ = increase   ◇ = decrease   ● = start/same\n");
     
     chart
