@@ -209,7 +209,7 @@ fn generate_readme(results: &[RcsResult]) -> String {
     md.push_str("q0: ─[H]─────●─────[Measure]\n");
     md.push_str("             │\n");
     md.push_str("q1: ─[H]────[CZ]───[Measure]\n");
-    md.push_str("\n");
+    md.push('\n');
     md.push_str("H  = Hadamard gate (creates superposition)\n");
     md.push_str("CZ = Controlled-Z gate (creates entanglement)\n");
     md.push_str("```\n\n");
@@ -254,7 +254,7 @@ fn generate_readme(results: &[RcsResult]) -> String {
     md.push_str("          = (62 + 62.75 + 63.25 + 62) / 1000\n");
     md.push_str("          = 250 / 1000\n");
     md.push_str("          = 0.25\n");
-    md.push_str("\n");
+    md.push('\n');
     md.push_str("XEB = 2² × 0.25 - 1\n");
     md.push_str("    = 4 × 0.25 - 1\n");
     md.push_str("    = 1.0 - 1\n");
@@ -276,24 +276,24 @@ fn generate_readme(results: &[RcsResult]) -> String {
     md.push_str("**Perfect quantum computer samples (1000 shots):**\n");
     md.push_str("```\n");
     md.push_str("Counts: {00: 450, 01: 50, 10: 100, 11: 400}\n");
-    md.push_str("\n");
+    md.push('\n');
     md.push_str("⟨p_ideal⟩ = (450×0.45 + 50×0.05 + 100×0.10 + 400×0.40) / 1000\n");
     md.push_str("          = (202.5 + 2.5 + 10 + 160) / 1000\n");
     md.push_str("          = 375 / 1000\n");
     md.push_str("          = 0.375\n");
-    md.push_str("\n");
+    md.push('\n');
     md.push_str("XEB = 4 × 0.375 - 1 = 1.5 - 1 = 0.5\n");
     md.push_str("```\n\n");
     
     md.push_str("**Noisy quantum computer samples:**\n");
     md.push_str("```\n");
     md.push_str("Counts: {00: 300, 01: 200, 10: 200, 11: 300}  (more uniform due to noise)\n");
-    md.push_str("\n");
+    md.push('\n');
     md.push_str("⟨p_ideal⟩ = (300×0.45 + 200×0.05 + 200×0.10 + 300×0.40) / 1000\n");
     md.push_str("          = (135 + 10 + 20 + 120) / 1000\n");
     md.push_str("          = 285 / 1000\n");
     md.push_str("          = 0.285\n");
-    md.push_str("\n");
+    md.push('\n');
     md.push_str("XEB = 4 × 0.285 - 1 = 1.14 - 1 = 0.14\n");
     md.push_str("```\n\n");
     
@@ -358,7 +358,7 @@ fn generate_readme(results: &[RcsResult]) -> String {
                 r.date, r.depth, r.qubits, r.xeb_score, r.samples, r.runtime_ms
             ));
         }
-        md.push_str("\n");
+        md.push('\n');
         
         if results.len() >= 2 {
             md.push_str("### XEB Trend (Recent)\n\n");
