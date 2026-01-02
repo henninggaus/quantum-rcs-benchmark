@@ -17,7 +17,7 @@ The benchmark measures circuit quality using **Cross-Entropy Benchmarking (XEB)*
 | Date | 2026-01-02 |
 | Qubits | 10 |
 | Circuit Depth | 7 |
-| **XEB Score** | **1.0000** |
+| **XEB Score** | **-0.5000** |
 | Samples | 1024 |
 | Runtime | 3ms |
 
@@ -298,7 +298,7 @@ Layer 2:     [R]─────●  [R]─────●  [R]─────●
 
 | Date | Depth | Qubits | XEB Score | Samples | Runtime |
 |------|-------|--------|-----------|---------|--------|
-| 2026-01-02 | 7 | 10 | 1.0000 | 1024 | 3ms |
+| 2026-01-02 | 7 | 10 | -0.5000 | 1024 | 3ms |
 
 ---
 
