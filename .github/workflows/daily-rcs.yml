@@ -2,7 +2,6 @@ name: Daily Quantum RCS Benchmark
 
 on:
   schedule:
-    # Run daily at 00:00 UTC
     - cron: '0 0 * * *'
   workflow_dispatch:
     inputs:
@@ -32,9 +31,7 @@ jobs:
           fetch-depth: 0
       
       - name: Setup Rust toolchain
-        uses: dtolnay/rust-action@stable
-        with:
-          components: rustfmt, clippy
+        uses: dtolnay/rust-toolchain@stable
       
       - name: Cache cargo registry
         uses: actions/cache@v4
@@ -50,14 +47,13 @@ jobs:
       - name: Build release
         run: cargo build --release
       
-      - name: Calculate depth (day of year mod 10 + 5)
+      - name: Calculate depth
         id: params
         run: |
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             DEPTH="${{ github.event.inputs.depth }}"
             QUBITS="${{ github.event.inputs.qubits }}"
           else
-            # Variable depth based on day of year
             DOY=$(date +%j)
             DEPTH=$(( (DOY % 10) + 5 ))
             QUBITS=10
@@ -65,51 +61,26 @@ jobs:
           echo "depth=$DEPTH" >> $GITHUB_OUTPUT
           echo "qubits=$QUBITS" >> $GITHUB_OUTPUT
           echo "date=$(date +%Y%m%d)" >> $GITHUB_OUTPUT
-          echo "📊 Parameters: Depth=$DEPTH, Qubits=$QUBITS"
       
       - name: Create results directory
         run: mkdir -p results
       
       - name: Run RCS Benchmark
-        run: |
-          echo "🔬 Running Quantum RCS Benchmark..."
-          ./target/release/rcs_sim ${{ steps.params.outputs.depth }} ${{ steps.params.outputs.qubits }} 1024
-          echo "✅ Benchmark complete!"
-      
-      - name: Verify result file
-        run: |
-          RESULT_FILE="results/${{ steps.params.outputs.date }}.json"
-          if [ -f "$RESULT_FILE" ]; then
-            echo "📄 Result file created:"
-            cat "$RESULT_FILE"
-          else
-            echo "❌ Result file not found!"
-            exit 1
-          fi
+        run: ./target/release/rcs_sim ${{ steps.params.outputs.depth }} ${{ steps.params.outputs.qubits }} 1024
       
       - name: Generate README
-        run: |
-          echo "📝 Updating README.md..."
-          ./target/release/readme_gen
+        run: ./target/release/readme_gen
       
       - name: Commit and push results
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          
-          DEPTH=${{ steps.params.outputs.depth }}
-          DATE=${{ steps.params.outputs.date }}
-          
-          # Add new files
           git add results/*.json README.md
-          
-          # Check if there are changes
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "🔮 Daily RCS Update: Depth ${DEPTH} - ${DATE}"
+            git commit -m "🔮 Daily RCS Update: Depth ${{ steps.params.outputs.depth }}"
             git push
-            echo "✅ Changes pushed successfully!"
           fi
 
   test:
@@ -120,7 +91,7 @@ jobs:
         uses: actions/checkout@v4
       
       - name: Setup Rust toolchain
-        uses: dtolnay/rust-action@stable
+        uses: dtolnay/rust-toolchain@stable
       
       - name: Run tests
         run: cargo test --release
