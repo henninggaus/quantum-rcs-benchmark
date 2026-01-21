@@ -1,0 +1,8 @@
+{
+  "date": "2026-01-21",
+  "depth": 12,
+  "qubits": 10,
+  "xeb_score": -0.5,
+  "samples": 1024,
+  "runtime_ms": 4
+}
